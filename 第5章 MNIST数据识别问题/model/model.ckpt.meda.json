@@ -19,6 +19,7 @@ meta_info_def {
         type: "type"
         allowed_values {
           list {
+            type: DT_BFLOAT16
             type: DT_HALF
             type: DT_FLOAT
             type: DT_DOUBLE
@@ -93,18 +94,21 @@ meta_info_def {
           list {
             type: DT_FLOAT
             type: DT_DOUBLE
-            type: DT_INT64
             type: DT_INT32
             type: DT_UINT8
-            type: DT_UINT16
             type: DT_INT16
             type: DT_INT8
             type: DT_COMPLEX64
-            type: DT_COMPLEX128
+            type: DT_INT64
             type: DT_QINT8
             type: DT_QUINT8
             type: DT_QINT32
+            type: DT_BFLOAT16
+            type: DT_UINT16
+            type: DT_COMPLEX128
             type: DT_HALF
+            type: DT_UINT32
+            type: DT_UINT64
           }
         }
       }
@@ -208,6 +212,7 @@ meta_info_def {
         type: "type"
         allowed_values {
           list {
+            type: DT_BFLOAT16
             type: DT_HALF
             type: DT_FLOAT
             type: DT_DOUBLE
@@ -226,6 +231,25 @@ meta_info_def {
     }
     op {
       name: "NoOp"
+    }
+    op {
+      name: "PlaceholderWithDefault"
+      input_arg {
+        name: "input"
+        type_attr: "dtype"
+      }
+      output_arg {
+        name: "output"
+        type_attr: "dtype"
+      }
+      attr {
+        name: "dtype"
+        type: "type"
+      }
+      attr {
+        name: "shape"
+        type: "shape"
+      }
     }
     op {
       name: "RefSwitch"
@@ -325,6 +349,7 @@ meta_info_def {
         type: "type"
         allowed_values {
           list {
+            type: DT_BFLOAT16
             type: DT_HALF
             type: DT_FLOAT
             type: DT_DOUBLE
@@ -395,8 +420,8 @@ meta_info_def {
       is_stateful: true
     }
   }
-  tensorflow_version: "1.4.0"
-  tensorflow_git_version: "v1.4.0-rc1-11-g130a514"
+  tensorflow_version: "1.13.1"
+  tensorflow_git_version: "b\'unknown\'"
 }
 graph_def {
   node {
@@ -734,7 +759,7 @@ graph_def {
     }
   }
   node {
-    name: "save/Const"
+    name: "save/filename/input"
     op: "Const"
     attr {
       key: "_output_shapes"
@@ -759,6 +784,60 @@ graph_def {
           tensor_shape {
           }
           string_val: "model"
+        }
+      }
+    }
+  }
+  node {
+    name: "save/filename"
+    op: "PlaceholderWithDefault"
+    input: "save/filename/input"
+    attr {
+      key: "_output_shapes"
+      value {
+        list {
+          shape {
+          }
+        }
+      }
+    }
+    attr {
+      key: "dtype"
+      value {
+        type: DT_STRING
+      }
+    }
+    attr {
+      key: "shape"
+      value {
+        shape {
+        }
+      }
+    }
+  }
+  node {
+    name: "save/Const"
+    op: "PlaceholderWithDefault"
+    input: "save/filename"
+    attr {
+      key: "_output_shapes"
+      value {
+        list {
+          shape {
+          }
+        }
+      }
+    }
+    attr {
+      key: "dtype"
+      value {
+        type: DT_STRING
+      }
+    }
+    attr {
+      key: "shape"
+      value {
+        shape {
         }
       }
     }
@@ -887,13 +966,14 @@ graph_def {
   node {
     name: "save/RestoreV2/tensor_names"
     op: "Const"
+    device: "/device:CPU:0"
     attr {
       key: "_output_shapes"
       value {
         list {
           shape {
             dim {
-              size: 1
+              size: 2
             }
           }
         }
@@ -912,10 +992,11 @@ graph_def {
           dtype: DT_STRING
           tensor_shape {
             dim {
-              size: 1
+              size: 2
             }
           }
           string_val: "v1"
+          string_val: "v2"
         }
       }
     }
@@ -923,13 +1004,14 @@ graph_def {
   node {
     name: "save/RestoreV2/shape_and_slices"
     op: "Const"
+    device: "/device:CPU:0"
     attr {
       key: "_output_shapes"
       value {
         list {
           shape {
             dim {
-              size: 1
+              size: 2
             }
           }
         }
@@ -948,9 +1030,10 @@ graph_def {
           dtype: DT_STRING
           tensor_shape {
             dim {
-              size: 1
+              size: 2
             }
           }
+          string_val: ""
           string_val: ""
         }
       }
@@ -962,10 +1045,14 @@ graph_def {
     input: "save/Const"
     input: "save/RestoreV2/tensor_names"
     input: "save/RestoreV2/shape_and_slices"
+    device: "/device:CPU:0"
     attr {
       key: "_output_shapes"
       value {
         list {
+          shape {
+            unknown_rank: true
+          }
           shape {
             unknown_rank: true
           }
@@ -976,6 +1063,7 @@ graph_def {
       key: "dtypes"
       value {
         list {
+          type: DT_FLOAT
           type: DT_FLOAT
         }
       }
@@ -1026,107 +1114,10 @@ graph_def {
     }
   }
   node {
-    name: "save/RestoreV2_1/tensor_names"
-    op: "Const"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            dim {
-              size: 1
-            }
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtype"
-      value {
-        type: DT_STRING
-      }
-    }
-    attr {
-      key: "value"
-      value {
-        tensor {
-          dtype: DT_STRING
-          tensor_shape {
-            dim {
-              size: 1
-            }
-          }
-          string_val: "v2"
-        }
-      }
-    }
-  }
-  node {
-    name: "save/RestoreV2_1/shape_and_slices"
-    op: "Const"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            dim {
-              size: 1
-            }
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtype"
-      value {
-        type: DT_STRING
-      }
-    }
-    attr {
-      key: "value"
-      value {
-        tensor {
-          dtype: DT_STRING
-          tensor_shape {
-            dim {
-              size: 1
-            }
-          }
-          string_val: ""
-        }
-      }
-    }
-  }
-  node {
-    name: "save/RestoreV2_1"
-    op: "RestoreV2"
-    input: "save/Const"
-    input: "save/RestoreV2_1/tensor_names"
-    input: "save/RestoreV2_1/shape_and_slices"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            unknown_rank: true
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtypes"
-      value {
-        list {
-          type: DT_FLOAT
-        }
-      }
-    }
-  }
-  node {
     name: "save/Assign_1"
     op: "Assign"
     input: "other-v2"
-    input: "save/RestoreV2_1"
+    input: "save/RestoreV2:1"
     attr {
       key: "T"
       value {
@@ -1421,6 +1412,29 @@ graph_def {
     }
   }
   node {
+    name: "cond/read"
+    op: "Identity"
+    input: "cond/read/Switch:1"
+    attr {
+      key: "T"
+      value {
+        type: DT_FLOAT
+      }
+    }
+    attr {
+      key: "_output_shapes"
+      value {
+        list {
+          shape {
+            dim {
+              size: 1
+            }
+          }
+        }
+      }
+    }
+  }
+  node {
     name: "cond/read/Switch"
     op: "RefSwitch"
     input: "other-v1"
@@ -1448,29 +1462,6 @@ graph_def {
               size: 1
             }
           }
-          shape {
-            dim {
-              size: 1
-            }
-          }
-        }
-      }
-    }
-  }
-  node {
-    name: "cond/read"
-    op: "Identity"
-    input: "cond/read/Switch:1"
-    attr {
-      key: "T"
-      value {
-        type: DT_FLOAT
-      }
-    }
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
           shape {
             dim {
               size: 1
@@ -1745,6 +1736,37 @@ graph_def {
     }
   }
   node {
+    name: "other-v1/ExponentialMovingAverage/cond/read"
+    op: "Identity"
+    input: "other-v1/ExponentialMovingAverage/cond/read/Switch:1"
+    attr {
+      key: "T"
+      value {
+        type: DT_FLOAT
+      }
+    }
+    attr {
+      key: "_class"
+      value {
+        list {
+          s: "loc:@other-v1"
+        }
+      }
+    }
+    attr {
+      key: "_output_shapes"
+      value {
+        list {
+          shape {
+            dim {
+              size: 1
+            }
+          }
+        }
+      }
+    }
+  }
+  node {
     name: "other-v1/ExponentialMovingAverage/cond/read/Switch"
     op: "RefSwitch"
     input: "other-v1"
@@ -1772,37 +1794,6 @@ graph_def {
               size: 1
             }
           }
-          shape {
-            dim {
-              size: 1
-            }
-          }
-        }
-      }
-    }
-  }
-  node {
-    name: "other-v1/ExponentialMovingAverage/cond/read"
-    op: "Identity"
-    input: "other-v1/ExponentialMovingAverage/cond/read/Switch:1"
-    attr {
-      key: "T"
-      value {
-        type: DT_FLOAT
-      }
-    }
-    attr {
-      key: "_class"
-      value {
-        list {
-          s: "loc:@other-v1"
-        }
-      }
-    }
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
           shape {
             dim {
               size: 1
@@ -1949,7 +1940,9 @@ graph_def {
       value {
         list {
           shape {
-            unknown_rank: true
+            dim {
+              size: 1
+            }
           }
         }
       }
@@ -1985,7 +1978,9 @@ graph_def {
       value {
         list {
           shape {
-            unknown_rank: true
+            dim {
+              size: 1
+            }
           }
           shape {
           }
@@ -2180,6 +2175,29 @@ graph_def {
     }
   }
   node {
+    name: "cond_1/read"
+    op: "Identity"
+    input: "cond_1/read/Switch:1"
+    attr {
+      key: "T"
+      value {
+        type: DT_FLOAT
+      }
+    }
+    attr {
+      key: "_output_shapes"
+      value {
+        list {
+          shape {
+            dim {
+              size: 1
+            }
+          }
+        }
+      }
+    }
+  }
+  node {
     name: "cond_1/read/Switch"
     op: "RefSwitch"
     input: "other-v2"
@@ -2207,29 +2225,6 @@ graph_def {
               size: 1
             }
           }
-          shape {
-            dim {
-              size: 1
-            }
-          }
-        }
-      }
-    }
-  }
-  node {
-    name: "cond_1/read"
-    op: "Identity"
-    input: "cond_1/read/Switch:1"
-    attr {
-      key: "T"
-      value {
-        type: DT_FLOAT
-      }
-    }
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
           shape {
             dim {
               size: 1
@@ -2504,6 +2499,37 @@ graph_def {
     }
   }
   node {
+    name: "other-v2/ExponentialMovingAverage/cond/read"
+    op: "Identity"
+    input: "other-v2/ExponentialMovingAverage/cond/read/Switch:1"
+    attr {
+      key: "T"
+      value {
+        type: DT_FLOAT
+      }
+    }
+    attr {
+      key: "_class"
+      value {
+        list {
+          s: "loc:@other-v2"
+        }
+      }
+    }
+    attr {
+      key: "_output_shapes"
+      value {
+        list {
+          shape {
+            dim {
+              size: 1
+            }
+          }
+        }
+      }
+    }
+  }
+  node {
     name: "other-v2/ExponentialMovingAverage/cond/read/Switch"
     op: "RefSwitch"
     input: "other-v2"
@@ -2531,37 +2557,6 @@ graph_def {
               size: 1
             }
           }
-          shape {
-            dim {
-              size: 1
-            }
-          }
-        }
-      }
-    }
-  }
-  node {
-    name: "other-v2/ExponentialMovingAverage/cond/read"
-    op: "Identity"
-    input: "other-v2/ExponentialMovingAverage/cond/read/Switch:1"
-    attr {
-      key: "T"
-      value {
-        type: DT_FLOAT
-      }
-    }
-    attr {
-      key: "_class"
-      value {
-        list {
-          s: "loc:@other-v2"
-        }
-      }
-    }
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
           shape {
             dim {
               size: 1
@@ -2708,7 +2703,9 @@ graph_def {
       value {
         list {
           shape {
-            unknown_rank: true
+            dim {
+              size: 1
+            }
           }
         }
       }
@@ -2744,7 +2741,9 @@ graph_def {
       value {
         list {
           shape {
-            unknown_rank: true
+            dim {
+              size: 1
+            }
           }
           shape {
           }
@@ -2939,6 +2938,26 @@ graph_def {
     }
   }
   node {
+    name: "cond_2/read"
+    op: "Identity"
+    input: "cond_2/read/Switch:1"
+    attr {
+      key: "T"
+      value {
+        type: DT_FLOAT
+      }
+    }
+    attr {
+      key: "_output_shapes"
+      value {
+        list {
+          shape {
+          }
+        }
+      }
+    }
+  }
+  node {
     name: "cond_2/read/Switch"
     op: "RefSwitch"
     input: "v"
@@ -2963,26 +2982,6 @@ graph_def {
         list {
           shape {
           }
-          shape {
-          }
-        }
-      }
-    }
-  }
-  node {
-    name: "cond_2/read"
-    op: "Identity"
-    input: "cond_2/read/Switch:1"
-    attr {
-      key: "T"
-      value {
-        type: DT_FLOAT
-      }
-    }
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
           shape {
           }
         }
@@ -3239,6 +3238,34 @@ graph_def {
     }
   }
   node {
+    name: "v/ExponentialMovingAverage/cond/read"
+    op: "Identity"
+    input: "v/ExponentialMovingAverage/cond/read/Switch:1"
+    attr {
+      key: "T"
+      value {
+        type: DT_FLOAT
+      }
+    }
+    attr {
+      key: "_class"
+      value {
+        list {
+          s: "loc:@v"
+        }
+      }
+    }
+    attr {
+      key: "_output_shapes"
+      value {
+        list {
+          shape {
+          }
+        }
+      }
+    }
+  }
+  node {
     name: "v/ExponentialMovingAverage/cond/read/Switch"
     op: "RefSwitch"
     input: "v"
@@ -3263,34 +3290,6 @@ graph_def {
         list {
           shape {
           }
-          shape {
-          }
-        }
-      }
-    }
-  }
-  node {
-    name: "v/ExponentialMovingAverage/cond/read"
-    op: "Identity"
-    input: "v/ExponentialMovingAverage/cond/read/Switch:1"
-    attr {
-      key: "T"
-      value {
-        type: DT_FLOAT
-      }
-    }
-    attr {
-      key: "_class"
-      value {
-        list {
-          s: "loc:@v"
-        }
-      }
-    }
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
           shape {
           }
         }
@@ -3419,7 +3418,6 @@ graph_def {
       value {
         list {
           shape {
-            unknown_rank: true
           }
         }
       }
@@ -3455,7 +3453,6 @@ graph_def {
       value {
         list {
           shape {
-            unknown_rank: true
           }
           shape {
           }
@@ -3557,7 +3554,7 @@ graph_def {
           dtype: DT_FLOAT
           tensor_shape {
           }
-          float_val: 0.990000009537
+          float_val: 0.9900000095367432
         }
       }
     }
@@ -4068,7 +4065,7 @@ graph_def {
     input: "^ExponentialMovingAverage/AssignMovingAvg_2"
   }
   node {
-    name: "save_1/Const"
+    name: "save_1/filename/input"
     op: "Const"
     attr {
       key: "_output_shapes"
@@ -4093,6 +4090,60 @@ graph_def {
           tensor_shape {
           }
           string_val: "model"
+        }
+      }
+    }
+  }
+  node {
+    name: "save_1/filename"
+    op: "PlaceholderWithDefault"
+    input: "save_1/filename/input"
+    attr {
+      key: "_output_shapes"
+      value {
+        list {
+          shape {
+          }
+        }
+      }
+    }
+    attr {
+      key: "dtype"
+      value {
+        type: DT_STRING
+      }
+    }
+    attr {
+      key: "shape"
+      value {
+        shape {
+        }
+      }
+    }
+  }
+  node {
+    name: "save_1/Const"
+    op: "PlaceholderWithDefault"
+    input: "save_1/filename"
+    attr {
+      key: "_output_shapes"
+      value {
+        list {
+          shape {
+          }
+        }
+      }
+    }
+    attr {
+      key: "dtype"
+      value {
+        type: DT_STRING
+      }
+    }
+    attr {
+      key: "shape"
+      value {
+        shape {
         }
       }
     }
@@ -4237,13 +4288,14 @@ graph_def {
   node {
     name: "save_1/RestoreV2/tensor_names"
     op: "Const"
+    device: "/device:CPU:0"
     attr {
       key: "_output_shapes"
       value {
         list {
           shape {
             dim {
-              size: 1
+              size: 6
             }
           }
         }
@@ -4262,10 +4314,15 @@ graph_def {
           dtype: DT_STRING
           tensor_shape {
             dim {
-              size: 1
+              size: 6
             }
           }
           string_val: "other-v1"
+          string_val: "other-v1/ExponentialMovingAverage"
+          string_val: "other-v2"
+          string_val: "other-v2/ExponentialMovingAverage"
+          string_val: "v"
+          string_val: "v/ExponentialMovingAverage"
         }
       }
     }
@@ -4273,13 +4330,14 @@ graph_def {
   node {
     name: "save_1/RestoreV2/shape_and_slices"
     op: "Const"
+    device: "/device:CPU:0"
     attr {
       key: "_output_shapes"
       value {
         list {
           shape {
             dim {
-              size: 1
+              size: 6
             }
           }
         }
@@ -4298,9 +4356,14 @@ graph_def {
           dtype: DT_STRING
           tensor_shape {
             dim {
-              size: 1
+              size: 6
             }
           }
+          string_val: ""
+          string_val: ""
+          string_val: ""
+          string_val: ""
+          string_val: ""
           string_val: ""
         }
       }
@@ -4312,10 +4375,26 @@ graph_def {
     input: "save_1/Const"
     input: "save_1/RestoreV2/tensor_names"
     input: "save_1/RestoreV2/shape_and_slices"
+    device: "/device:CPU:0"
     attr {
       key: "_output_shapes"
       value {
         list {
+          shape {
+            unknown_rank: true
+          }
+          shape {
+            unknown_rank: true
+          }
+          shape {
+            unknown_rank: true
+          }
+          shape {
+            unknown_rank: true
+          }
+          shape {
+            unknown_rank: true
+          }
           shape {
             unknown_rank: true
           }
@@ -4326,6 +4405,11 @@ graph_def {
       key: "dtypes"
       value {
         list {
+          type: DT_FLOAT
+          type: DT_FLOAT
+          type: DT_FLOAT
+          type: DT_FLOAT
+          type: DT_FLOAT
           type: DT_FLOAT
         }
       }
@@ -4376,107 +4460,10 @@ graph_def {
     }
   }
   node {
-    name: "save_1/RestoreV2_1/tensor_names"
-    op: "Const"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            dim {
-              size: 1
-            }
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtype"
-      value {
-        type: DT_STRING
-      }
-    }
-    attr {
-      key: "value"
-      value {
-        tensor {
-          dtype: DT_STRING
-          tensor_shape {
-            dim {
-              size: 1
-            }
-          }
-          string_val: "other-v1/ExponentialMovingAverage"
-        }
-      }
-    }
-  }
-  node {
-    name: "save_1/RestoreV2_1/shape_and_slices"
-    op: "Const"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            dim {
-              size: 1
-            }
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtype"
-      value {
-        type: DT_STRING
-      }
-    }
-    attr {
-      key: "value"
-      value {
-        tensor {
-          dtype: DT_STRING
-          tensor_shape {
-            dim {
-              size: 1
-            }
-          }
-          string_val: ""
-        }
-      }
-    }
-  }
-  node {
-    name: "save_1/RestoreV2_1"
-    op: "RestoreV2"
-    input: "save_1/Const"
-    input: "save_1/RestoreV2_1/tensor_names"
-    input: "save_1/RestoreV2_1/shape_and_slices"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            unknown_rank: true
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtypes"
-      value {
-        list {
-          type: DT_FLOAT
-        }
-      }
-    }
-  }
-  node {
     name: "save_1/Assign_1"
     op: "Assign"
     input: "other-v1/ExponentialMovingAverage"
-    input: "save_1/RestoreV2_1"
+    input: "save_1/RestoreV2:1"
     attr {
       key: "T"
       value {
@@ -4517,107 +4504,10 @@ graph_def {
     }
   }
   node {
-    name: "save_1/RestoreV2_2/tensor_names"
-    op: "Const"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            dim {
-              size: 1
-            }
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtype"
-      value {
-        type: DT_STRING
-      }
-    }
-    attr {
-      key: "value"
-      value {
-        tensor {
-          dtype: DT_STRING
-          tensor_shape {
-            dim {
-              size: 1
-            }
-          }
-          string_val: "other-v2"
-        }
-      }
-    }
-  }
-  node {
-    name: "save_1/RestoreV2_2/shape_and_slices"
-    op: "Const"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            dim {
-              size: 1
-            }
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtype"
-      value {
-        type: DT_STRING
-      }
-    }
-    attr {
-      key: "value"
-      value {
-        tensor {
-          dtype: DT_STRING
-          tensor_shape {
-            dim {
-              size: 1
-            }
-          }
-          string_val: ""
-        }
-      }
-    }
-  }
-  node {
-    name: "save_1/RestoreV2_2"
-    op: "RestoreV2"
-    input: "save_1/Const"
-    input: "save_1/RestoreV2_2/tensor_names"
-    input: "save_1/RestoreV2_2/shape_and_slices"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            unknown_rank: true
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtypes"
-      value {
-        list {
-          type: DT_FLOAT
-        }
-      }
-    }
-  }
-  node {
     name: "save_1/Assign_2"
     op: "Assign"
     input: "other-v2"
-    input: "save_1/RestoreV2_2"
+    input: "save_1/RestoreV2:2"
     attr {
       key: "T"
       value {
@@ -4654,103 +4544,6 @@ graph_def {
       key: "validate_shape"
       value {
         b: true
-      }
-    }
-  }
-  node {
-    name: "save_1/RestoreV2_3/tensor_names"
-    op: "Const"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            dim {
-              size: 1
-            }
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtype"
-      value {
-        type: DT_STRING
-      }
-    }
-    attr {
-      key: "value"
-      value {
-        tensor {
-          dtype: DT_STRING
-          tensor_shape {
-            dim {
-              size: 1
-            }
-          }
-          string_val: "other-v2/ExponentialMovingAverage"
-        }
-      }
-    }
-  }
-  node {
-    name: "save_1/RestoreV2_3/shape_and_slices"
-    op: "Const"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            dim {
-              size: 1
-            }
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtype"
-      value {
-        type: DT_STRING
-      }
-    }
-    attr {
-      key: "value"
-      value {
-        tensor {
-          dtype: DT_STRING
-          tensor_shape {
-            dim {
-              size: 1
-            }
-          }
-          string_val: ""
-        }
-      }
-    }
-  }
-  node {
-    name: "save_1/RestoreV2_3"
-    op: "RestoreV2"
-    input: "save_1/Const"
-    input: "save_1/RestoreV2_3/tensor_names"
-    input: "save_1/RestoreV2_3/shape_and_slices"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            unknown_rank: true
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtypes"
-      value {
-        list {
-          type: DT_FLOAT
-        }
       }
     }
   }
@@ -4758,7 +4551,7 @@ graph_def {
     name: "save_1/Assign_3"
     op: "Assign"
     input: "other-v2/ExponentialMovingAverage"
-    input: "save_1/RestoreV2_3"
+    input: "save_1/RestoreV2:3"
     attr {
       key: "T"
       value {
@@ -4799,107 +4592,10 @@ graph_def {
     }
   }
   node {
-    name: "save_1/RestoreV2_4/tensor_names"
-    op: "Const"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            dim {
-              size: 1
-            }
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtype"
-      value {
-        type: DT_STRING
-      }
-    }
-    attr {
-      key: "value"
-      value {
-        tensor {
-          dtype: DT_STRING
-          tensor_shape {
-            dim {
-              size: 1
-            }
-          }
-          string_val: "v"
-        }
-      }
-    }
-  }
-  node {
-    name: "save_1/RestoreV2_4/shape_and_slices"
-    op: "Const"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            dim {
-              size: 1
-            }
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtype"
-      value {
-        type: DT_STRING
-      }
-    }
-    attr {
-      key: "value"
-      value {
-        tensor {
-          dtype: DT_STRING
-          tensor_shape {
-            dim {
-              size: 1
-            }
-          }
-          string_val: ""
-        }
-      }
-    }
-  }
-  node {
-    name: "save_1/RestoreV2_4"
-    op: "RestoreV2"
-    input: "save_1/Const"
-    input: "save_1/RestoreV2_4/tensor_names"
-    input: "save_1/RestoreV2_4/shape_and_slices"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            unknown_rank: true
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtypes"
-      value {
-        list {
-          type: DT_FLOAT
-        }
-      }
-    }
-  }
-  node {
     name: "save_1/Assign_4"
     op: "Assign"
     input: "v"
-    input: "save_1/RestoreV2_4"
+    input: "save_1/RestoreV2:4"
     attr {
       key: "T"
       value {
@@ -4937,107 +4633,10 @@ graph_def {
     }
   }
   node {
-    name: "save_1/RestoreV2_5/tensor_names"
-    op: "Const"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            dim {
-              size: 1
-            }
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtype"
-      value {
-        type: DT_STRING
-      }
-    }
-    attr {
-      key: "value"
-      value {
-        tensor {
-          dtype: DT_STRING
-          tensor_shape {
-            dim {
-              size: 1
-            }
-          }
-          string_val: "v/ExponentialMovingAverage"
-        }
-      }
-    }
-  }
-  node {
-    name: "save_1/RestoreV2_5/shape_and_slices"
-    op: "Const"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            dim {
-              size: 1
-            }
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtype"
-      value {
-        type: DT_STRING
-      }
-    }
-    attr {
-      key: "value"
-      value {
-        tensor {
-          dtype: DT_STRING
-          tensor_shape {
-            dim {
-              size: 1
-            }
-          }
-          string_val: ""
-        }
-      }
-    }
-  }
-  node {
-    name: "save_1/RestoreV2_5"
-    op: "RestoreV2"
-    input: "save_1/Const"
-    input: "save_1/RestoreV2_5/tensor_names"
-    input: "save_1/RestoreV2_5/shape_and_slices"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            unknown_rank: true
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtypes"
-      value {
-        list {
-          type: DT_FLOAT
-        }
-      }
-    }
-  }
-  node {
     name: "save_1/Assign_5"
     op: "Assign"
     input: "v/ExponentialMovingAverage"
-    input: "save_1/RestoreV2_5"
+    input: "save_1/RestoreV2:5"
     attr {
       key: "T"
       value {
@@ -5088,10 +4687,10 @@ graph_def {
     name: "init"
     op: "NoOp"
     input: "^other-v1/Assign"
-    input: "^other-v2/Assign"
-    input: "^v/Assign"
     input: "^other-v1/ExponentialMovingAverage/Assign"
+    input: "^other-v2/Assign"
     input: "^other-v2/ExponentialMovingAverage/Assign"
+    input: "^v/Assign"
     input: "^v/ExponentialMovingAverage/Assign"
   }
   node {
@@ -5303,7 +4902,7 @@ graph_def {
     }
   }
   node {
-    name: "save_2/Const"
+    name: "save_2/filename/input"
     op: "Const"
     attr {
       key: "_output_shapes"
@@ -5328,6 +4927,60 @@ graph_def {
           tensor_shape {
           }
           string_val: "model"
+        }
+      }
+    }
+  }
+  node {
+    name: "save_2/filename"
+    op: "PlaceholderWithDefault"
+    input: "save_2/filename/input"
+    attr {
+      key: "_output_shapes"
+      value {
+        list {
+          shape {
+          }
+        }
+      }
+    }
+    attr {
+      key: "dtype"
+      value {
+        type: DT_STRING
+      }
+    }
+    attr {
+      key: "shape"
+      value {
+        shape {
+        }
+      }
+    }
+  }
+  node {
+    name: "save_2/Const"
+    op: "PlaceholderWithDefault"
+    input: "save_2/filename"
+    attr {
+      key: "_output_shapes"
+      value {
+        list {
+          shape {
+          }
+        }
+      }
+    }
+    attr {
+      key: "dtype"
+      value {
+        type: DT_STRING
+      }
+    }
+    attr {
+      key: "shape"
+      value {
+        shape {
         }
       }
     }
@@ -5452,6 +5105,7 @@ graph_def {
   node {
     name: "save_2/RestoreV2/tensor_names"
     op: "Const"
+    device: "/device:CPU:0"
     attr {
       key: "_output_shapes"
       value {
@@ -5488,6 +5142,7 @@ graph_def {
   node {
     name: "save_2/RestoreV2/shape_and_slices"
     op: "Const"
+    device: "/device:CPU:0"
     attr {
       key: "_output_shapes"
       value {
@@ -5527,6 +5182,7 @@ graph_def {
     input: "save_2/Const"
     input: "save_2/RestoreV2/tensor_names"
     input: "save_2/RestoreV2/shape_and_slices"
+    device: "/device:CPU:0"
     attr {
       key: "_output_shapes"
       value {
@@ -5730,7 +5386,7 @@ graph_def {
     }
   }
   node {
-    name: "save_3/Const"
+    name: "save_3/filename/input"
     op: "Const"
     attr {
       key: "_output_shapes"
@@ -5755,6 +5411,60 @@ graph_def {
           tensor_shape {
           }
           string_val: "model"
+        }
+      }
+    }
+  }
+  node {
+    name: "save_3/filename"
+    op: "PlaceholderWithDefault"
+    input: "save_3/filename/input"
+    attr {
+      key: "_output_shapes"
+      value {
+        list {
+          shape {
+          }
+        }
+      }
+    }
+    attr {
+      key: "dtype"
+      value {
+        type: DT_STRING
+      }
+    }
+    attr {
+      key: "shape"
+      value {
+        shape {
+        }
+      }
+    }
+  }
+  node {
+    name: "save_3/Const"
+    op: "PlaceholderWithDefault"
+    input: "save_3/filename"
+    attr {
+      key: "_output_shapes"
+      value {
+        list {
+          shape {
+          }
+        }
+      }
+    }
+    attr {
+      key: "dtype"
+      value {
+        type: DT_STRING
+      }
+    }
+    attr {
+      key: "shape"
+      value {
+        shape {
         }
       }
     }
@@ -5879,6 +5589,7 @@ graph_def {
   node {
     name: "save_3/RestoreV2/tensor_names"
     op: "Const"
+    device: "/device:CPU:0"
     attr {
       key: "_output_shapes"
       value {
@@ -5915,6 +5626,7 @@ graph_def {
   node {
     name: "save_3/RestoreV2/shape_and_slices"
     op: "Const"
+    device: "/device:CPU:0"
     attr {
       key: "_output_shapes"
       value {
@@ -5954,6 +5666,7 @@ graph_def {
     input: "save_3/Const"
     input: "save_3/RestoreV2/tensor_names"
     input: "save_3/RestoreV2/shape_and_slices"
+    device: "/device:CPU:0"
     attr {
       key: "_output_shapes"
       value {
@@ -6357,15 +6070,15 @@ graph_def {
     name: "init_1"
     op: "NoOp"
     input: "^other-v1/Assign"
-    input: "^other-v2/Assign"
-    input: "^v/Assign"
     input: "^other-v1/ExponentialMovingAverage/Assign"
+    input: "^other-v2/Assign"
     input: "^other-v2/ExponentialMovingAverage/Assign"
+    input: "^v/Assign"
     input: "^v/ExponentialMovingAverage/Assign"
-    input: "^v_1/Assign"
-    input: "^v_2/Assign"
     input: "^v1/Assign"
     input: "^v2/Assign"
+    input: "^v_1/Assign"
+    input: "^v_2/Assign"
   }
   node {
     name: "import/other-v1"
@@ -6860,7 +6573,7 @@ graph_def {
     }
   }
   node {
-    name: "save_4/Const"
+    name: "save_4/filename/input"
     op: "Const"
     attr {
       key: "_output_shapes"
@@ -6885,6 +6598,60 @@ graph_def {
           tensor_shape {
           }
           string_val: "model"
+        }
+      }
+    }
+  }
+  node {
+    name: "save_4/filename"
+    op: "PlaceholderWithDefault"
+    input: "save_4/filename/input"
+    attr {
+      key: "_output_shapes"
+      value {
+        list {
+          shape {
+          }
+        }
+      }
+    }
+    attr {
+      key: "dtype"
+      value {
+        type: DT_STRING
+      }
+    }
+    attr {
+      key: "shape"
+      value {
+        shape {
+        }
+      }
+    }
+  }
+  node {
+    name: "save_4/Const"
+    op: "PlaceholderWithDefault"
+    input: "save_4/filename"
+    attr {
+      key: "_output_shapes"
+      value {
+        list {
+          shape {
+          }
+        }
+      }
+    }
+    attr {
+      key: "dtype"
+      value {
+        type: DT_STRING
+      }
+    }
+    attr {
+      key: "shape"
+      value {
+        shape {
         }
       }
     }
@@ -7053,13 +6820,14 @@ graph_def {
   node {
     name: "save_4/RestoreV2/tensor_names"
     op: "Const"
+    device: "/device:CPU:0"
     attr {
       key: "_output_shapes"
       value {
         list {
           shape {
             dim {
-              size: 1
+              size: 12
             }
           }
         }
@@ -7078,10 +6846,21 @@ graph_def {
           dtype: DT_STRING
           tensor_shape {
             dim {
-              size: 1
+              size: 12
             }
           }
           string_val: "other-v1"
+          string_val: "other-v1/ExponentialMovingAverage"
+          string_val: "other-v2"
+          string_val: "other-v2/ExponentialMovingAverage"
+          string_val: "v"
+          string_val: "v/ExponentialMovingAverage"
+          string_val: "v1"
+          string_val: "v1_1"
+          string_val: "v2"
+          string_val: "v2_1"
+          string_val: "v_1"
+          string_val: "v_2"
         }
       }
     }
@@ -7089,13 +6868,14 @@ graph_def {
   node {
     name: "save_4/RestoreV2/shape_and_slices"
     op: "Const"
+    device: "/device:CPU:0"
     attr {
       key: "_output_shapes"
       value {
         list {
           shape {
             dim {
-              size: 1
+              size: 12
             }
           }
         }
@@ -7114,9 +6894,20 @@ graph_def {
           dtype: DT_STRING
           tensor_shape {
             dim {
-              size: 1
+              size: 12
             }
           }
+          string_val: ""
+          string_val: ""
+          string_val: ""
+          string_val: ""
+          string_val: ""
+          string_val: ""
+          string_val: ""
+          string_val: ""
+          string_val: ""
+          string_val: ""
+          string_val: ""
           string_val: ""
         }
       }
@@ -7128,10 +6919,44 @@ graph_def {
     input: "save_4/Const"
     input: "save_4/RestoreV2/tensor_names"
     input: "save_4/RestoreV2/shape_and_slices"
+    device: "/device:CPU:0"
     attr {
       key: "_output_shapes"
       value {
         list {
+          shape {
+            unknown_rank: true
+          }
+          shape {
+            unknown_rank: true
+          }
+          shape {
+            unknown_rank: true
+          }
+          shape {
+            unknown_rank: true
+          }
+          shape {
+            unknown_rank: true
+          }
+          shape {
+            unknown_rank: true
+          }
+          shape {
+            unknown_rank: true
+          }
+          shape {
+            unknown_rank: true
+          }
+          shape {
+            unknown_rank: true
+          }
+          shape {
+            unknown_rank: true
+          }
+          shape {
+            unknown_rank: true
+          }
           shape {
             unknown_rank: true
           }
@@ -7142,6 +6967,17 @@ graph_def {
       key: "dtypes"
       value {
         list {
+          type: DT_FLOAT
+          type: DT_FLOAT
+          type: DT_FLOAT
+          type: DT_FLOAT
+          type: DT_FLOAT
+          type: DT_FLOAT
+          type: DT_FLOAT
+          type: DT_FLOAT
+          type: DT_FLOAT
+          type: DT_FLOAT
+          type: DT_FLOAT
           type: DT_FLOAT
         }
       }
@@ -7192,107 +7028,10 @@ graph_def {
     }
   }
   node {
-    name: "save_4/RestoreV2_1/tensor_names"
-    op: "Const"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            dim {
-              size: 1
-            }
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtype"
-      value {
-        type: DT_STRING
-      }
-    }
-    attr {
-      key: "value"
-      value {
-        tensor {
-          dtype: DT_STRING
-          tensor_shape {
-            dim {
-              size: 1
-            }
-          }
-          string_val: "other-v1/ExponentialMovingAverage"
-        }
-      }
-    }
-  }
-  node {
-    name: "save_4/RestoreV2_1/shape_and_slices"
-    op: "Const"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            dim {
-              size: 1
-            }
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtype"
-      value {
-        type: DT_STRING
-      }
-    }
-    attr {
-      key: "value"
-      value {
-        tensor {
-          dtype: DT_STRING
-          tensor_shape {
-            dim {
-              size: 1
-            }
-          }
-          string_val: ""
-        }
-      }
-    }
-  }
-  node {
-    name: "save_4/RestoreV2_1"
-    op: "RestoreV2"
-    input: "save_4/Const"
-    input: "save_4/RestoreV2_1/tensor_names"
-    input: "save_4/RestoreV2_1/shape_and_slices"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            unknown_rank: true
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtypes"
-      value {
-        list {
-          type: DT_FLOAT
-        }
-      }
-    }
-  }
-  node {
     name: "save_4/Assign_1"
     op: "Assign"
     input: "other-v1/ExponentialMovingAverage"
-    input: "save_4/RestoreV2_1"
+    input: "save_4/RestoreV2:1"
     attr {
       key: "T"
       value {
@@ -7333,107 +7072,10 @@ graph_def {
     }
   }
   node {
-    name: "save_4/RestoreV2_2/tensor_names"
-    op: "Const"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            dim {
-              size: 1
-            }
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtype"
-      value {
-        type: DT_STRING
-      }
-    }
-    attr {
-      key: "value"
-      value {
-        tensor {
-          dtype: DT_STRING
-          tensor_shape {
-            dim {
-              size: 1
-            }
-          }
-          string_val: "other-v2"
-        }
-      }
-    }
-  }
-  node {
-    name: "save_4/RestoreV2_2/shape_and_slices"
-    op: "Const"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            dim {
-              size: 1
-            }
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtype"
-      value {
-        type: DT_STRING
-      }
-    }
-    attr {
-      key: "value"
-      value {
-        tensor {
-          dtype: DT_STRING
-          tensor_shape {
-            dim {
-              size: 1
-            }
-          }
-          string_val: ""
-        }
-      }
-    }
-  }
-  node {
-    name: "save_4/RestoreV2_2"
-    op: "RestoreV2"
-    input: "save_4/Const"
-    input: "save_4/RestoreV2_2/tensor_names"
-    input: "save_4/RestoreV2_2/shape_and_slices"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            unknown_rank: true
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtypes"
-      value {
-        list {
-          type: DT_FLOAT
-        }
-      }
-    }
-  }
-  node {
     name: "save_4/Assign_2"
     op: "Assign"
     input: "other-v2"
-    input: "save_4/RestoreV2_2"
+    input: "save_4/RestoreV2:2"
     attr {
       key: "T"
       value {
@@ -7470,103 +7112,6 @@ graph_def {
       key: "validate_shape"
       value {
         b: true
-      }
-    }
-  }
-  node {
-    name: "save_4/RestoreV2_3/tensor_names"
-    op: "Const"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            dim {
-              size: 1
-            }
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtype"
-      value {
-        type: DT_STRING
-      }
-    }
-    attr {
-      key: "value"
-      value {
-        tensor {
-          dtype: DT_STRING
-          tensor_shape {
-            dim {
-              size: 1
-            }
-          }
-          string_val: "other-v2/ExponentialMovingAverage"
-        }
-      }
-    }
-  }
-  node {
-    name: "save_4/RestoreV2_3/shape_and_slices"
-    op: "Const"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            dim {
-              size: 1
-            }
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtype"
-      value {
-        type: DT_STRING
-      }
-    }
-    attr {
-      key: "value"
-      value {
-        tensor {
-          dtype: DT_STRING
-          tensor_shape {
-            dim {
-              size: 1
-            }
-          }
-          string_val: ""
-        }
-      }
-    }
-  }
-  node {
-    name: "save_4/RestoreV2_3"
-    op: "RestoreV2"
-    input: "save_4/Const"
-    input: "save_4/RestoreV2_3/tensor_names"
-    input: "save_4/RestoreV2_3/shape_and_slices"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            unknown_rank: true
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtypes"
-      value {
-        list {
-          type: DT_FLOAT
-        }
       }
     }
   }
@@ -7574,7 +7119,7 @@ graph_def {
     name: "save_4/Assign_3"
     op: "Assign"
     input: "other-v2/ExponentialMovingAverage"
-    input: "save_4/RestoreV2_3"
+    input: "save_4/RestoreV2:3"
     attr {
       key: "T"
       value {
@@ -7615,107 +7160,10 @@ graph_def {
     }
   }
   node {
-    name: "save_4/RestoreV2_4/tensor_names"
-    op: "Const"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            dim {
-              size: 1
-            }
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtype"
-      value {
-        type: DT_STRING
-      }
-    }
-    attr {
-      key: "value"
-      value {
-        tensor {
-          dtype: DT_STRING
-          tensor_shape {
-            dim {
-              size: 1
-            }
-          }
-          string_val: "v"
-        }
-      }
-    }
-  }
-  node {
-    name: "save_4/RestoreV2_4/shape_and_slices"
-    op: "Const"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            dim {
-              size: 1
-            }
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtype"
-      value {
-        type: DT_STRING
-      }
-    }
-    attr {
-      key: "value"
-      value {
-        tensor {
-          dtype: DT_STRING
-          tensor_shape {
-            dim {
-              size: 1
-            }
-          }
-          string_val: ""
-        }
-      }
-    }
-  }
-  node {
-    name: "save_4/RestoreV2_4"
-    op: "RestoreV2"
-    input: "save_4/Const"
-    input: "save_4/RestoreV2_4/tensor_names"
-    input: "save_4/RestoreV2_4/shape_and_slices"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            unknown_rank: true
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtypes"
-      value {
-        list {
-          type: DT_FLOAT
-        }
-      }
-    }
-  }
-  node {
     name: "save_4/Assign_4"
     op: "Assign"
     input: "v"
-    input: "save_4/RestoreV2_4"
+    input: "save_4/RestoreV2:4"
     attr {
       key: "T"
       value {
@@ -7749,103 +7197,6 @@ graph_def {
       key: "validate_shape"
       value {
         b: true
-      }
-    }
-  }
-  node {
-    name: "save_4/RestoreV2_5/tensor_names"
-    op: "Const"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            dim {
-              size: 1
-            }
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtype"
-      value {
-        type: DT_STRING
-      }
-    }
-    attr {
-      key: "value"
-      value {
-        tensor {
-          dtype: DT_STRING
-          tensor_shape {
-            dim {
-              size: 1
-            }
-          }
-          string_val: "v/ExponentialMovingAverage"
-        }
-      }
-    }
-  }
-  node {
-    name: "save_4/RestoreV2_5/shape_and_slices"
-    op: "Const"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            dim {
-              size: 1
-            }
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtype"
-      value {
-        type: DT_STRING
-      }
-    }
-    attr {
-      key: "value"
-      value {
-        tensor {
-          dtype: DT_STRING
-          tensor_shape {
-            dim {
-              size: 1
-            }
-          }
-          string_val: ""
-        }
-      }
-    }
-  }
-  node {
-    name: "save_4/RestoreV2_5"
-    op: "RestoreV2"
-    input: "save_4/Const"
-    input: "save_4/RestoreV2_5/tensor_names"
-    input: "save_4/RestoreV2_5/shape_and_slices"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            unknown_rank: true
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtypes"
-      value {
-        list {
-          type: DT_FLOAT
-        }
       }
     }
   }
@@ -7853,7 +7204,7 @@ graph_def {
     name: "save_4/Assign_5"
     op: "Assign"
     input: "v/ExponentialMovingAverage"
-    input: "save_4/RestoreV2_5"
+    input: "save_4/RestoreV2:5"
     attr {
       key: "T"
       value {
@@ -7891,107 +7242,10 @@ graph_def {
     }
   }
   node {
-    name: "save_4/RestoreV2_6/tensor_names"
-    op: "Const"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            dim {
-              size: 1
-            }
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtype"
-      value {
-        type: DT_STRING
-      }
-    }
-    attr {
-      key: "value"
-      value {
-        tensor {
-          dtype: DT_STRING
-          tensor_shape {
-            dim {
-              size: 1
-            }
-          }
-          string_val: "v1"
-        }
-      }
-    }
-  }
-  node {
-    name: "save_4/RestoreV2_6/shape_and_slices"
-    op: "Const"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            dim {
-              size: 1
-            }
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtype"
-      value {
-        type: DT_STRING
-      }
-    }
-    attr {
-      key: "value"
-      value {
-        tensor {
-          dtype: DT_STRING
-          tensor_shape {
-            dim {
-              size: 1
-            }
-          }
-          string_val: ""
-        }
-      }
-    }
-  }
-  node {
-    name: "save_4/RestoreV2_6"
-    op: "RestoreV2"
-    input: "save_4/Const"
-    input: "save_4/RestoreV2_6/tensor_names"
-    input: "save_4/RestoreV2_6/shape_and_slices"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            unknown_rank: true
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtypes"
-      value {
-        list {
-          type: DT_FLOAT
-        }
-      }
-    }
-  }
-  node {
     name: "save_4/Assign_6"
     op: "Assign"
     input: "v1"
-    input: "save_4/RestoreV2_6"
+    input: "save_4/RestoreV2:6"
     attr {
       key: "T"
       value {
@@ -8032,107 +7286,10 @@ graph_def {
     }
   }
   node {
-    name: "save_4/RestoreV2_7/tensor_names"
-    op: "Const"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            dim {
-              size: 1
-            }
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtype"
-      value {
-        type: DT_STRING
-      }
-    }
-    attr {
-      key: "value"
-      value {
-        tensor {
-          dtype: DT_STRING
-          tensor_shape {
-            dim {
-              size: 1
-            }
-          }
-          string_val: "v1_1"
-        }
-      }
-    }
-  }
-  node {
-    name: "save_4/RestoreV2_7/shape_and_slices"
-    op: "Const"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            dim {
-              size: 1
-            }
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtype"
-      value {
-        type: DT_STRING
-      }
-    }
-    attr {
-      key: "value"
-      value {
-        tensor {
-          dtype: DT_STRING
-          tensor_shape {
-            dim {
-              size: 1
-            }
-          }
-          string_val: ""
-        }
-      }
-    }
-  }
-  node {
-    name: "save_4/RestoreV2_7"
-    op: "RestoreV2"
-    input: "save_4/Const"
-    input: "save_4/RestoreV2_7/tensor_names"
-    input: "save_4/RestoreV2_7/shape_and_slices"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            unknown_rank: true
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtypes"
-      value {
-        list {
-          type: DT_FLOAT
-        }
-      }
-    }
-  }
-  node {
     name: "save_4/Assign_7"
     op: "Assign"
     input: "v1_1"
-    input: "save_4/RestoreV2_7"
+    input: "save_4/RestoreV2:7"
     attr {
       key: "T"
       value {
@@ -8173,107 +7330,10 @@ graph_def {
     }
   }
   node {
-    name: "save_4/RestoreV2_8/tensor_names"
-    op: "Const"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            dim {
-              size: 1
-            }
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtype"
-      value {
-        type: DT_STRING
-      }
-    }
-    attr {
-      key: "value"
-      value {
-        tensor {
-          dtype: DT_STRING
-          tensor_shape {
-            dim {
-              size: 1
-            }
-          }
-          string_val: "v2"
-        }
-      }
-    }
-  }
-  node {
-    name: "save_4/RestoreV2_8/shape_and_slices"
-    op: "Const"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            dim {
-              size: 1
-            }
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtype"
-      value {
-        type: DT_STRING
-      }
-    }
-    attr {
-      key: "value"
-      value {
-        tensor {
-          dtype: DT_STRING
-          tensor_shape {
-            dim {
-              size: 1
-            }
-          }
-          string_val: ""
-        }
-      }
-    }
-  }
-  node {
-    name: "save_4/RestoreV2_8"
-    op: "RestoreV2"
-    input: "save_4/Const"
-    input: "save_4/RestoreV2_8/tensor_names"
-    input: "save_4/RestoreV2_8/shape_and_slices"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            unknown_rank: true
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtypes"
-      value {
-        list {
-          type: DT_FLOAT
-        }
-      }
-    }
-  }
-  node {
     name: "save_4/Assign_8"
     op: "Assign"
     input: "v2"
-    input: "save_4/RestoreV2_8"
+    input: "save_4/RestoreV2:8"
     attr {
       key: "T"
       value {
@@ -8314,107 +7374,10 @@ graph_def {
     }
   }
   node {
-    name: "save_4/RestoreV2_9/tensor_names"
-    op: "Const"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            dim {
-              size: 1
-            }
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtype"
-      value {
-        type: DT_STRING
-      }
-    }
-    attr {
-      key: "value"
-      value {
-        tensor {
-          dtype: DT_STRING
-          tensor_shape {
-            dim {
-              size: 1
-            }
-          }
-          string_val: "v2_1"
-        }
-      }
-    }
-  }
-  node {
-    name: "save_4/RestoreV2_9/shape_and_slices"
-    op: "Const"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            dim {
-              size: 1
-            }
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtype"
-      value {
-        type: DT_STRING
-      }
-    }
-    attr {
-      key: "value"
-      value {
-        tensor {
-          dtype: DT_STRING
-          tensor_shape {
-            dim {
-              size: 1
-            }
-          }
-          string_val: ""
-        }
-      }
-    }
-  }
-  node {
-    name: "save_4/RestoreV2_9"
-    op: "RestoreV2"
-    input: "save_4/Const"
-    input: "save_4/RestoreV2_9/tensor_names"
-    input: "save_4/RestoreV2_9/shape_and_slices"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            unknown_rank: true
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtypes"
-      value {
-        list {
-          type: DT_FLOAT
-        }
-      }
-    }
-  }
-  node {
     name: "save_4/Assign_9"
     op: "Assign"
     input: "v2_1"
-    input: "save_4/RestoreV2_9"
+    input: "save_4/RestoreV2:9"
     attr {
       key: "T"
       value {
@@ -8455,107 +7418,10 @@ graph_def {
     }
   }
   node {
-    name: "save_4/RestoreV2_10/tensor_names"
-    op: "Const"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            dim {
-              size: 1
-            }
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtype"
-      value {
-        type: DT_STRING
-      }
-    }
-    attr {
-      key: "value"
-      value {
-        tensor {
-          dtype: DT_STRING
-          tensor_shape {
-            dim {
-              size: 1
-            }
-          }
-          string_val: "v_1"
-        }
-      }
-    }
-  }
-  node {
-    name: "save_4/RestoreV2_10/shape_and_slices"
-    op: "Const"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            dim {
-              size: 1
-            }
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtype"
-      value {
-        type: DT_STRING
-      }
-    }
-    attr {
-      key: "value"
-      value {
-        tensor {
-          dtype: DT_STRING
-          tensor_shape {
-            dim {
-              size: 1
-            }
-          }
-          string_val: ""
-        }
-      }
-    }
-  }
-  node {
-    name: "save_4/RestoreV2_10"
-    op: "RestoreV2"
-    input: "save_4/Const"
-    input: "save_4/RestoreV2_10/tensor_names"
-    input: "save_4/RestoreV2_10/shape_and_slices"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            unknown_rank: true
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtypes"
-      value {
-        list {
-          type: DT_FLOAT
-        }
-      }
-    }
-  }
-  node {
     name: "save_4/Assign_10"
     op: "Assign"
     input: "v_1"
-    input: "save_4/RestoreV2_10"
+    input: "save_4/RestoreV2:10"
     attr {
       key: "T"
       value {
@@ -8593,107 +7459,10 @@ graph_def {
     }
   }
   node {
-    name: "save_4/RestoreV2_11/tensor_names"
-    op: "Const"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            dim {
-              size: 1
-            }
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtype"
-      value {
-        type: DT_STRING
-      }
-    }
-    attr {
-      key: "value"
-      value {
-        tensor {
-          dtype: DT_STRING
-          tensor_shape {
-            dim {
-              size: 1
-            }
-          }
-          string_val: "v_2"
-        }
-      }
-    }
-  }
-  node {
-    name: "save_4/RestoreV2_11/shape_and_slices"
-    op: "Const"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            dim {
-              size: 1
-            }
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtype"
-      value {
-        type: DT_STRING
-      }
-    }
-    attr {
-      key: "value"
-      value {
-        tensor {
-          dtype: DT_STRING
-          tensor_shape {
-            dim {
-              size: 1
-            }
-          }
-          string_val: ""
-        }
-      }
-    }
-  }
-  node {
-    name: "save_4/RestoreV2_11"
-    op: "RestoreV2"
-    input: "save_4/Const"
-    input: "save_4/RestoreV2_11/tensor_names"
-    input: "save_4/RestoreV2_11/shape_and_slices"
-    attr {
-      key: "_output_shapes"
-      value {
-        list {
-          shape {
-            unknown_rank: true
-          }
-        }
-      }
-    }
-    attr {
-      key: "dtypes"
-      value {
-        list {
-          type: DT_FLOAT
-        }
-      }
-    }
-  }
-  node {
     name: "save_4/Assign_11"
     op: "Assign"
     input: "v_2"
-    input: "save_4/RestoreV2_11"
+    input: "save_4/RestoreV2:11"
     attr {
       key: "T"
       value {
@@ -8735,6 +7504,8 @@ graph_def {
     op: "NoOp"
     input: "^save_4/Assign"
     input: "^save_4/Assign_1"
+    input: "^save_4/Assign_10"
+    input: "^save_4/Assign_11"
     input: "^save_4/Assign_2"
     input: "^save_4/Assign_3"
     input: "^save_4/Assign_4"
@@ -8743,8 +7514,6 @@ graph_def {
     input: "^save_4/Assign_7"
     input: "^save_4/Assign_8"
     input: "^save_4/Assign_9"
-    input: "^save_4/Assign_10"
-    input: "^save_4/Assign_11"
   }
   versions {
   }
@@ -8761,18 +7530,18 @@ collection_def {
   key: "cond_context"
   value {
     bytes_list {
-      value: "\n\016cond/cond_text\022\016cond/pred_id:0\032\017cond/switch_t:0 \001*p\n\016cond/pred_id:0\n\022cond/read/Switch:1\n\013cond/read:0\n\017cond/switch_t:0\n\nother-v1:0\022 \n\nother-v1:0\022\022cond/read/Switch:1"
-      value: "\n\020cond/cond_text_1\022\016cond/pred_id:0\032\017cond/switch_f:0*h\n\007Const:0\n\017cond/Switch_1:0\n\017cond/Switch_1:1\n\016cond/pred_id:0\n\017cond/switch_f:0\022\032\n\007Const:0\022\017cond/Switch_1:0"
-      value: "\n0other-v1/ExponentialMovingAverage/cond/cond_text\0220other-v1/ExponentialMovingAverage/cond/pred_id:0\0321other-v1/ExponentialMovingAverage/cond/switch_t:0 \001*\232\002\n0other-v1/ExponentialMovingAverage/cond/pred_id:0\n4other-v1/ExponentialMovingAverage/cond/read/Switch:1\n-other-v1/ExponentialMovingAverage/cond/read:0\n1other-v1/ExponentialMovingAverage/cond/switch_t:0\n\nother-v1:0\022B\n\nother-v1:0\0224other-v1/ExponentialMovingAverage/cond/read/Switch:1"
-      value: "\n2other-v1/ExponentialMovingAverage/cond/cond_text_1\0220other-v1/ExponentialMovingAverage/cond/pred_id:0\0321other-v1/ExponentialMovingAverage/cond/switch_f:0*\222\002\n\007Const:0\n1other-v1/ExponentialMovingAverage/cond/Switch_1:0\n1other-v1/ExponentialMovingAverage/cond/Switch_1:1\n0other-v1/ExponentialMovingAverage/cond/pred_id:0\n1other-v1/ExponentialMovingAverage/cond/switch_f:0\022<\n\007Const:0\0221other-v1/ExponentialMovingAverage/cond/Switch_1:0"
-      value: "\n\020cond_1/cond_text\022\020cond_1/pred_id:0\032\021cond_1/switch_t:0 \001*z\n\020cond_1/pred_id:0\n\024cond_1/read/Switch:1\n\rcond_1/read:0\n\021cond_1/switch_t:0\n\nother-v2:0\022\"\n\nother-v2:0\022\024cond_1/read/Switch:1"
-      value: "\n\022cond_1/cond_text_1\022\020cond_1/pred_id:0\032\021cond_1/switch_f:0*v\n\tConst_1:0\n\021cond_1/Switch_1:0\n\021cond_1/Switch_1:1\n\020cond_1/pred_id:0\n\021cond_1/switch_f:0\022\036\n\tConst_1:0\022\021cond_1/Switch_1:0"
-      value: "\n0other-v2/ExponentialMovingAverage/cond/cond_text\0220other-v2/ExponentialMovingAverage/cond/pred_id:0\0321other-v2/ExponentialMovingAverage/cond/switch_t:0 \001*\232\002\n0other-v2/ExponentialMovingAverage/cond/pred_id:0\n4other-v2/ExponentialMovingAverage/cond/read/Switch:1\n-other-v2/ExponentialMovingAverage/cond/read:0\n1other-v2/ExponentialMovingAverage/cond/switch_t:0\n\nother-v2:0\022B\n\nother-v2:0\0224other-v2/ExponentialMovingAverage/cond/read/Switch:1"
-      value: "\n2other-v2/ExponentialMovingAverage/cond/cond_text_1\0220other-v2/ExponentialMovingAverage/cond/pred_id:0\0321other-v2/ExponentialMovingAverage/cond/switch_f:0*\226\002\n\tConst_1:0\n1other-v2/ExponentialMovingAverage/cond/Switch_1:0\n1other-v2/ExponentialMovingAverage/cond/Switch_1:1\n0other-v2/ExponentialMovingAverage/cond/pred_id:0\n1other-v2/ExponentialMovingAverage/cond/switch_f:0\022>\n\tConst_1:0\0221other-v2/ExponentialMovingAverage/cond/Switch_1:0"
-      value: "\n\020cond_2/cond_text\022\020cond_2/pred_id:0\032\021cond_2/switch_t:0 \001*l\n\020cond_2/pred_id:0\n\024cond_2/read/Switch:1\n\rcond_2/read:0\n\021cond_2/switch_t:0\n\003v:0\022\033\n\003v:0\022\024cond_2/read/Switch:1"
-      value: "\n\022cond_2/cond_text_1\022\020cond_2/pred_id:0\032\021cond_2/switch_f:0*\206\001\n\021cond_2/Switch_1:0\n\021cond_2/Switch_1:1\n\020cond_2/pred_id:0\n\021cond_2/switch_f:0\n\021v/initial_value:0\022&\n\021v/initial_value:0\022\021cond_2/Switch_1:0"
-      value: "\n)v/ExponentialMovingAverage/cond/cond_text\022)v/ExponentialMovingAverage/cond/pred_id:0\032*v/ExponentialMovingAverage/cond/switch_t:0 \001*\351\001\n)v/ExponentialMovingAverage/cond/pred_id:0\n-v/ExponentialMovingAverage/cond/read/Switch:1\n&v/ExponentialMovingAverage/cond/read:0\n*v/ExponentialMovingAverage/cond/switch_t:0\n\003v:0\0224\n\003v:0\022-v/ExponentialMovingAverage/cond/read/Switch:1"
-      value: "\n+v/ExponentialMovingAverage/cond/cond_text_1\022)v/ExponentialMovingAverage/cond/pred_id:0\032*v/ExponentialMovingAverage/cond/switch_f:0*\203\002\n*v/ExponentialMovingAverage/cond/Switch_1:0\n*v/ExponentialMovingAverage/cond/Switch_1:1\n)v/ExponentialMovingAverage/cond/pred_id:0\n*v/ExponentialMovingAverage/cond/switch_f:0\n\021v/initial_value:0\022?\n\021v/initial_value:0\022*v/ExponentialMovingAverage/cond/Switch_1:0"
+      value: "\n\016cond/cond_text\022\016cond/pred_id:0\032\017cond/switch_t:0 \001*\222\001\n\016cond/pred_id:0\n\022cond/read/Switch:1\n\013cond/read:0\n\017cond/switch_t:0\n\nother-v1:0\022 \n\016cond/pred_id:0\022\016cond/pred_id:0\022 \n\nother-v1:0\022\022cond/read/Switch:1"
+      value: "\n\020cond/cond_text_1\022\016cond/pred_id:0\032\017cond/switch_f:0*\212\001\n\007Const:0\n\017cond/Switch_1:0\n\017cond/Switch_1:1\n\016cond/pred_id:0\n\017cond/switch_f:0\022 \n\016cond/pred_id:0\022\016cond/pred_id:0\022\032\n\007Const:0\022\017cond/Switch_1:0"
+      value: "\n0other-v1/ExponentialMovingAverage/cond/cond_text\0220other-v1/ExponentialMovingAverage/cond/pred_id:0\0321other-v1/ExponentialMovingAverage/cond/switch_t:0 \001*\200\003\n0other-v1/ExponentialMovingAverage/cond/pred_id:0\n4other-v1/ExponentialMovingAverage/cond/read/Switch:1\n-other-v1/ExponentialMovingAverage/cond/read:0\n1other-v1/ExponentialMovingAverage/cond/switch_t:0\n\nother-v1:0\022B\n\nother-v1:0\0224other-v1/ExponentialMovingAverage/cond/read/Switch:1\022d\n0other-v1/ExponentialMovingAverage/cond/pred_id:0\0220other-v1/ExponentialMovingAverage/cond/pred_id:0"
+      value: "\n2other-v1/ExponentialMovingAverage/cond/cond_text_1\0220other-v1/ExponentialMovingAverage/cond/pred_id:0\0321other-v1/ExponentialMovingAverage/cond/switch_f:0*\370\002\n\007Const:0\n1other-v1/ExponentialMovingAverage/cond/Switch_1:0\n1other-v1/ExponentialMovingAverage/cond/Switch_1:1\n0other-v1/ExponentialMovingAverage/cond/pred_id:0\n1other-v1/ExponentialMovingAverage/cond/switch_f:0\022d\n0other-v1/ExponentialMovingAverage/cond/pred_id:0\0220other-v1/ExponentialMovingAverage/cond/pred_id:0\022<\n\007Const:0\0221other-v1/ExponentialMovingAverage/cond/Switch_1:0"
+      value: "\n\020cond_1/cond_text\022\020cond_1/pred_id:0\032\021cond_1/switch_t:0 \001*\240\001\n\020cond_1/pred_id:0\n\024cond_1/read/Switch:1\n\rcond_1/read:0\n\021cond_1/switch_t:0\n\nother-v2:0\022$\n\020cond_1/pred_id:0\022\020cond_1/pred_id:0\022\"\n\nother-v2:0\022\024cond_1/read/Switch:1"
+      value: "\n\022cond_1/cond_text_1\022\020cond_1/pred_id:0\032\021cond_1/switch_f:0*\234\001\n\tConst_1:0\n\021cond_1/Switch_1:0\n\021cond_1/Switch_1:1\n\020cond_1/pred_id:0\n\021cond_1/switch_f:0\022$\n\020cond_1/pred_id:0\022\020cond_1/pred_id:0\022\036\n\tConst_1:0\022\021cond_1/Switch_1:0"
+      value: "\n0other-v2/ExponentialMovingAverage/cond/cond_text\0220other-v2/ExponentialMovingAverage/cond/pred_id:0\0321other-v2/ExponentialMovingAverage/cond/switch_t:0 \001*\200\003\n0other-v2/ExponentialMovingAverage/cond/pred_id:0\n4other-v2/ExponentialMovingAverage/cond/read/Switch:1\n-other-v2/ExponentialMovingAverage/cond/read:0\n1other-v2/ExponentialMovingAverage/cond/switch_t:0\n\nother-v2:0\022B\n\nother-v2:0\0224other-v2/ExponentialMovingAverage/cond/read/Switch:1\022d\n0other-v2/ExponentialMovingAverage/cond/pred_id:0\0220other-v2/ExponentialMovingAverage/cond/pred_id:0"
+      value: "\n2other-v2/ExponentialMovingAverage/cond/cond_text_1\0220other-v2/ExponentialMovingAverage/cond/pred_id:0\0321other-v2/ExponentialMovingAverage/cond/switch_f:0*\374\002\n\tConst_1:0\n1other-v2/ExponentialMovingAverage/cond/Switch_1:0\n1other-v2/ExponentialMovingAverage/cond/Switch_1:1\n0other-v2/ExponentialMovingAverage/cond/pred_id:0\n1other-v2/ExponentialMovingAverage/cond/switch_f:0\022>\n\tConst_1:0\0221other-v2/ExponentialMovingAverage/cond/Switch_1:0\022d\n0other-v2/ExponentialMovingAverage/cond/pred_id:0\0220other-v2/ExponentialMovingAverage/cond/pred_id:0"
+      value: "\n\020cond_2/cond_text\022\020cond_2/pred_id:0\032\021cond_2/switch_t:0 \001*\222\001\n\020cond_2/pred_id:0\n\024cond_2/read/Switch:1\n\rcond_2/read:0\n\021cond_2/switch_t:0\n\003v:0\022\033\n\003v:0\022\024cond_2/read/Switch:1\022$\n\020cond_2/pred_id:0\022\020cond_2/pred_id:0"
+      value: "\n\022cond_2/cond_text_1\022\020cond_2/pred_id:0\032\021cond_2/switch_f:0*\254\001\n\021cond_2/Switch_1:0\n\021cond_2/Switch_1:1\n\020cond_2/pred_id:0\n\021cond_2/switch_f:0\n\021v/initial_value:0\022$\n\020cond_2/pred_id:0\022\020cond_2/pred_id:0\022&\n\021v/initial_value:0\022\021cond_2/Switch_1:0"
+      value: "\n)v/ExponentialMovingAverage/cond/cond_text\022)v/ExponentialMovingAverage/cond/pred_id:0\032*v/ExponentialMovingAverage/cond/switch_t:0 \001*\301\002\n)v/ExponentialMovingAverage/cond/pred_id:0\n-v/ExponentialMovingAverage/cond/read/Switch:1\n&v/ExponentialMovingAverage/cond/read:0\n*v/ExponentialMovingAverage/cond/switch_t:0\n\003v:0\022V\n)v/ExponentialMovingAverage/cond/pred_id:0\022)v/ExponentialMovingAverage/cond/pred_id:0\0224\n\003v:0\022-v/ExponentialMovingAverage/cond/read/Switch:1"
+      value: "\n+v/ExponentialMovingAverage/cond/cond_text_1\022)v/ExponentialMovingAverage/cond/pred_id:0\032*v/ExponentialMovingAverage/cond/switch_f:0*\333\002\n*v/ExponentialMovingAverage/cond/Switch_1:0\n*v/ExponentialMovingAverage/cond/Switch_1:1\n)v/ExponentialMovingAverage/cond/pred_id:0\n*v/ExponentialMovingAverage/cond/switch_f:0\n\021v/initial_value:0\022?\n\021v/initial_value:0\022*v/ExponentialMovingAverage/cond/Switch_1:0\022V\n)v/ExponentialMovingAverage/cond/pred_id:0\022)v/ExponentialMovingAverage/cond/pred_id:0"
     }
   }
 }
@@ -8780,9 +7549,9 @@ collection_def {
   key: "moving_average_variables"
   value {
     bytes_list {
-      value: "\n\nother-v1:0\022\017other-v1/Assign\032\017other-v1/read:02\007Const:0"
-      value: "\n\nother-v2:0\022\017other-v2/Assign\032\017other-v2/read:02\tConst_1:0"
-      value: "\n\003v:0\022\010v/Assign\032\010v/read:02\021v/initial_value:0"
+      value: "\n\nother-v1:0\022\017other-v1/Assign\032\017other-v1/read:02\007Const:08\001"
+      value: "\n\nother-v2:0\022\017other-v2/Assign\032\017other-v2/read:02\tConst_1:08\001"
+      value: "\n\003v:0\022\010v/Assign\032\010v/read:02\021v/initial_value:08\001"
     }
   }
 }
@@ -8790,15 +7559,15 @@ collection_def {
   key: "trainable_variables"
   value {
     bytes_list {
-      value: "\n\nother-v1:0\022\017other-v1/Assign\032\017other-v1/read:02\007Const:0"
-      value: "\n\nother-v2:0\022\017other-v2/Assign\032\017other-v2/read:02\tConst_1:0"
-      value: "\n\003v:0\022\010v/Assign\032\010v/read:02\021v/initial_value:0"
-      value: "\n\005v_1:0\022\nv_1/Assign\032\nv_1/read:02\023v_1/initial_value:0"
-      value: "\n\005v_2:0\022\nv_2/Assign\032\nv_2/read:02\023v_2/initial_value:0"
-      value: "\n\004v1:0\022\tv1/Assign\032\tv1/read:02\tConst_2:0"
-      value: "\n\004v2:0\022\tv2/Assign\032\tv2/read:02\tConst_3:0"
-      value: "\n\006v1_1:0\022\013v1_1/Assign\032\013v1_1/read:02\tConst_4:0"
-      value: "\n\006v2_1:0\022\013v2_1/Assign\032\013v2_1/read:02\tConst_5:0"
+      value: "\n\nother-v1:0\022\017other-v1/Assign\032\017other-v1/read:02\007Const:08\001"
+      value: "\n\nother-v2:0\022\017other-v2/Assign\032\017other-v2/read:02\tConst_1:08\001"
+      value: "\n\003v:0\022\010v/Assign\032\010v/read:02\021v/initial_value:08\001"
+      value: "\n\005v_1:0\022\nv_1/Assign\032\nv_1/read:02\023v_1/initial_value:08\001"
+      value: "\n\005v_2:0\022\nv_2/Assign\032\nv_2/read:02\023v_2/initial_value:08\001"
+      value: "\n\004v1:0\022\tv1/Assign\032\tv1/read:02\tConst_2:08\001"
+      value: "\n\004v2:0\022\tv2/Assign\032\tv2/read:02\tConst_3:08\001"
+      value: "\n\006v1_1:0\022\013v1_1/Assign\032\013v1_1/read:02\tConst_4:08\001"
+      value: "\n\006v2_1:0\022\013v2_1/Assign\032\013v2_1/read:02\tConst_5:08\001"
     }
   }
 }
@@ -8806,18 +7575,18 @@ collection_def {
   key: "variables"
   value {
     bytes_list {
-      value: "\n\nother-v1:0\022\017other-v1/Assign\032\017other-v1/read:02\007Const:0"
-      value: "\n\nother-v2:0\022\017other-v2/Assign\032\017other-v2/read:02\tConst_1:0"
-      value: "\n\003v:0\022\010v/Assign\032\010v/read:02\021v/initial_value:0"
+      value: "\n\nother-v1:0\022\017other-v1/Assign\032\017other-v1/read:02\007Const:08\001"
+      value: "\n\nother-v2:0\022\017other-v2/Assign\032\017other-v2/read:02\tConst_1:08\001"
+      value: "\n\003v:0\022\010v/Assign\032\010v/read:02\021v/initial_value:08\001"
       value: "\n#other-v1/ExponentialMovingAverage:0\022(other-v1/ExponentialMovingAverage/Assign\032(other-v1/ExponentialMovingAverage/read:02\014cond/Merge:0"
       value: "\n#other-v2/ExponentialMovingAverage:0\022(other-v2/ExponentialMovingAverage/Assign\032(other-v2/ExponentialMovingAverage/read:02\016cond_1/Merge:0"
       value: "\n\034v/ExponentialMovingAverage:0\022!v/ExponentialMovingAverage/Assign\032!v/ExponentialMovingAverage/read:02\016cond_2/Merge:0"
-      value: "\n\005v_1:0\022\nv_1/Assign\032\nv_1/read:02\023v_1/initial_value:0"
-      value: "\n\005v_2:0\022\nv_2/Assign\032\nv_2/read:02\023v_2/initial_value:0"
-      value: "\n\004v1:0\022\tv1/Assign\032\tv1/read:02\tConst_2:0"
-      value: "\n\004v2:0\022\tv2/Assign\032\tv2/read:02\tConst_3:0"
-      value: "\n\006v1_1:0\022\013v1_1/Assign\032\013v1_1/read:02\tConst_4:0"
-      value: "\n\006v2_1:0\022\013v2_1/Assign\032\013v2_1/read:02\tConst_5:0"
+      value: "\n\005v_1:0\022\nv_1/Assign\032\nv_1/read:02\023v_1/initial_value:08\001"
+      value: "\n\005v_2:0\022\nv_2/Assign\032\nv_2/read:02\023v_2/initial_value:08\001"
+      value: "\n\004v1:0\022\tv1/Assign\032\tv1/read:02\tConst_2:08\001"
+      value: "\n\004v2:0\022\tv2/Assign\032\tv2/read:02\tConst_3:08\001"
+      value: "\n\006v1_1:0\022\013v1_1/Assign\032\013v1_1/read:02\tConst_4:08\001"
+      value: "\n\006v2_1:0\022\013v2_1/Assign\032\013v2_1/read:02\tConst_5:08\001"
     }
   }
 }
